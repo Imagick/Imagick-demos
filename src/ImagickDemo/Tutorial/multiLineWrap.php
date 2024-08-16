@@ -30,16 +30,21 @@ class WordWrap
         $lines = array();
         $currentLine = '';
         foreach ($words as $word) {
-            $currentLine .= $word;
-            $possibleLine = $currentLine . ' '. $word;
-            //Check to see if we can add another word to this line
-            $metrics = $imagick->queryFontMetrics($draw, $currentLine);
+            if (strlen($currentLine) > 0) {
+                $possibleLine = $currentLine . ' '. $word;
+            } else {
+                $possibleLine = $word;
+            }
+            //If adding the next word would make the current line
+            //too long, place that line into the array
+            //and use the next word to start a new line.
+            $metrics = $imagick->queryFontMetrics($draw, $possibleLine);
             if ($metrics['textWidth'] >= $maxWidth) {
                 $lines[] = $currentLine;
                 $currentLine = $word;
             }
             else {
-                $currentLine .= ' ';
+                $currentLine = $possibleLine;
             }
             //Finally, update line height
             if ($metrics['textHeight'] > $lineHeight) {
@@ -51,8 +56,11 @@ class WordWrap
         if (strlen($currentLine) > 0) {
             $lines[] = $currentLine;
         }
-    
-        return new self($lineHeight, $lines);
+
+        //Put the lines in the right order
+        $orderedLines = array_reverse($lines);
+
+        return new self($lineHeight, $orderedLines);
     }
 }
 
